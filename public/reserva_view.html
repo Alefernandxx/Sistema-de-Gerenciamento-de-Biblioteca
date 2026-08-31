@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CRUD de Reservas</title>
+  <link rel="stylesheet" href="css/aluno.css">
+</head>
+<body>
+    <nav style="background: var(--cor-superficie); padding: 15px; border-radius: var(--raio); margin-bottom: 20px; box-shadow: var(--sombra); display: flex; gap: 15px;">
+  <a href="aluno_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Alunos</a>
+  <a href="autor_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Autores</a>
+  <a href="livro_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Livros</a>
+  <a href="reserva_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Reservas</a>
+</nav>
+
+  <h1>Reservas</h1>
+  <p id="mensagem" class="sucesso"></p>
+  <p id="erro" class="erro"></p>
+
+  <h2 id="titulo-formulario">Nova Reserva</h2>
+  <form id="formulario-reserva">
+    <input type="hidden" name="acao" value="salvar">
+    <input type="hidden" name="id">
+    <label>Status<br>
+        <select name="status" style="width: 100%; padding: 10px; border-radius: 8px;" required>
+            <option value="RESERVADO">RESERVADO</option>
+            <option value="CONCLUÍDO">CONCLUÍDO</option>
+            <option value="CANCELADO">CANCELADO</option>
+        </select>
+    </label>
+    <label>Data Início<br><input type="datetime-local" name="data_hora_inicio" required></label>
+    <label>Data Final (Opcional)<br><input type="datetime-local" name="data_hora_final"></label>
+    <label>Matrícula do Aluno<br><input type="number" name="aluno_matricula" required></label>
+    <button type="submit">Salvar</button>
+    <button id="cancelar" type="button" hidden>Cancelar</button>
+  </form>
+
+  <table>
+    <thead><tr><th>ID</th><th>Status</th><th>Início</th><th>Fim</th><th>Mat. Aluno</th><th>Ações</th></tr></thead>
+    <tbody id="lista-reservas"></tbody>
+  </table>
+
+  <script>
+    const api = 'reserva.php';
+    const formulario = document.querySelector('#formulario-reserva');
+
+    function mostrarResultado(dados) {
+      document.querySelector('#mensagem').textContent = dados.mensagem || '';
+      document.querySelector('#erro').textContent = dados.erro || '';
+    }
+
+    function limparFormulario() {
+      formulario.reset();
+      formulario.id.value = '';
+      document.querySelector('#titulo-formulario').textContent = 'Nova Reserva';
+      document.querySelector('#cancelar').hidden = true;
+    }
+
+    async function carregarReservas() {
+      const resposta = await fetch(api);
+      const dados = await resposta.json();
+      const lista = document.querySelector('#lista-reservas');
+      lista.textContent = '';
+      
+      if(dados.reservas) {
+          dados.reservas.forEach((reserva) => {
+            const linha = document.createElement('tr');
+            ['id', 'status', 'data_hora_inicio', 'data_hora_final', 'aluno_matricula'].forEach((campo) => {
+              const celula = document.createElement('td');
+              // Mostra um traço se a data final for nula
+              celula.textContent = reserva[campo] ? reserva[campo] : '-'; 
+              linha.appendChild(celula);
+            });
+            const acoes = document.createElement('td');
+            acoes.innerHTML = `<button type="button" data-editar="${reserva.id}">Editar</button>
+              <button type="button" data-excluir="${reserva.id}">Excluir</button>`;
+            linha.appendChild(acoes);
+            lista.appendChild(linha);
+          });
+      }
+    }
+
+    formulario.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      const resposta = await fetch(api, { method: 'POST', body: new FormData(formulario) });
+      const dados = await resposta.json();
+      mostrarResultado(dados);
+      if (resposta.ok) { limparFormulario(); await carregarReservas(); }
+    });
+
+    document.querySelector('#cancelar').addEventListener('click', limparFormulario);
+    document.querySelector('#lista-reservas').addEventListener('click', async (evento) => {
+      const editar = evento.target.dataset.editar;
+      const excluir = evento.target.dataset.excluir;
+      if (editar) {
+        const dados = await (await fetch(`${api}?editar=${editar}`)).json();
+        Object.entries(dados.reserva).forEach(([campo, valor]) => { 
+            // Trata as datas nulas para não quebrar o input
+            if(formulario[campo]) formulario[campo].value = valor || ''; 
+        });
+        document.querySelector('#titulo-formulario').textContent = 'Editar Reserva';
+        document.querySelector('#cancelar').hidden = false;
+      } else if (excluir && confirm('Excluir esta reserva?')) {
+        const dados = await (await fetch(api, { method: 'POST', body: new URLSearchParams({ acao: 'excluir', id: excluir }) })).json();
+        mostrarResultado(dados);
+        await carregarReservas();
+      }
+    });
+
+    carregarReservas();
+  </script>
+</body>
+</html>

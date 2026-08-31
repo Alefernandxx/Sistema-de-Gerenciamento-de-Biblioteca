@@ -1,0 +1,220 @@
+:root {
+  --cor-primaria: #4f46e5;
+  --cor-primaria-escura: #4338ca;
+  --cor-perigo: #dc2626;
+  --cor-perigo-escura: #b91c1c;
+  --cor-sucesso: #16a34a;
+  --cor-fundo: #f4f5fa;
+  --cor-superficie: #ffffff;
+  --cor-borda: #e2e4ec;
+  --cor-texto: #1f2330;
+  --cor-texto-suave: #6b7080;
+  --raio: 10px;
+  --sombra: 0 1px 3px rgba(20, 20, 40, 0.06), 0 6px 20px rgba(20, 20, 40, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 20px 60px;
+  line-height: 1.5;
+}
+
+h1 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+h1::after {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--cor-primaria);
+  margin-top: 10px;
+}
+
+h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--cor-texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 36px 0 16px;
+}
+
+p#mensagem,
+p#erro {
+  padding: 10px 14px;
+  border-radius: var(--raio);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.sucesso:not(:empty) {
+  background: #ecfdf3;
+  color: var(--cor-sucesso);
+  border: 1px solid #b7ecc8;
+}
+
+.erro:not(:empty) {
+  background: #fef2f2;
+  color: var(--cor-perigo);
+  border: 1px solid #f4c2c2;
+}
+
+form {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  padding: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 20px;
+}
+
+form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cor-texto-suave);
+  flex: 1 1 200px;
+}
+
+form label:has(textarea) {
+  flex-basis: 100%;
+}
+
+input,
+textarea {
+  font: inherit;
+  color: var(--cor-texto);
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 10px 12px;
+  width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--cor-primaria);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+form > button,
+#formulario-aluno > button {
+  align-self: flex-end;
+}
+
+button {
+  font: inherit;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+button[type="submit"] {
+  background: var(--cor-primaria);
+  color: #fff;
+}
+
+button[type="submit"]:hover {
+  background: var(--cor-primaria-escura);
+}
+
+#cancelar {
+  background: transparent;
+  color: var(--cor-texto-suave);
+  border: 1px solid var(--cor-borda);
+}
+
+#cancelar:hover {
+  background: var(--cor-fundo);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  overflow: hidden;
+  box-shadow: var(--sombra);
+  margin-top: 12px;
+}
+
+thead th {
+  text-align: left;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cor-texto-suave);
+  background: var(--cor-fundo);
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--cor-borda);
+  font-size: 0.92rem;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: #fafaff;
+}
+
+tbody td:last-child {
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+tbody button[data-editar] {
+  background: #eef2ff;
+  color: var(--cor-primaria-escura);
+}
+
+tbody button[data-editar]:hover {
+  background: #e0e7ff;
+}
+
+tbody button[data-excluir] {
+  background: #fef2f2;
+  color: var(--cor-perigo-escura);
+}
+
+tbody button[data-excluir]:hover {
+  background: #fde2e2;
+}

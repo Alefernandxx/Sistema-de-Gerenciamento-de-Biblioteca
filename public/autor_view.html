@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CRUD de Autores</title>
+  <link rel="stylesheet" href="css/aluno.css">
+</head>
+<body>
+    <nav style="background: var(--cor-superficie); padding: 15px; border-radius: var(--raio); margin-bottom: 20px; box-shadow: var(--sombra); display: flex; gap: 15px;">
+  <a href="aluno_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Alunos</a>
+  <a href="autor_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Autores</a>
+  <a href="livro_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Livros</a>
+  <a href="reserva_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Reservas</a>
+</nav>
+
+  <h1>Autores</h1>
+  <p id="mensagem" class="sucesso"></p>
+  <p id="erro" class="erro"></p>
+
+  <h2 id="titulo-formulario">Novo Autor</h2>
+  <form id="formulario-autor">
+    <input type="hidden" name="acao" value="salvar">
+    <input type="hidden" name="id">
+    <label>Nome<br><input name="nome" maxlength="200" required></label>
+    <label>CPF<br><input name="cpf" maxlength="11" required></label>
+    <label>E-mail<br><input type="email" name="email" maxlength="200" required></label>
+    <button type="submit">Salvar</button>
+    <button id="cancelar" type="button" hidden>Cancelar</button>
+  </form>
+
+  <table>
+    <thead><tr><th>ID</th><th>Nome</th><th>CPF</th><th>E-mail</th><th>Ações</th></tr></thead>
+    <tbody id="lista-autores"></tbody>
+  </table>
+
+  <script>
+    const api = 'autor.php';
+    const formulario = document.querySelector('#formulario-autor');
+
+    function mostrarResultado(dados) {
+      document.querySelector('#mensagem').textContent = dados.mensagem || '';
+      document.querySelector('#erro').textContent = dados.erro || '';
+    }
+
+    function limparFormulario() {
+      formulario.reset();
+      formulario.id.value = '';
+      document.querySelector('#titulo-formulario').textContent = 'Novo Autor';
+      document.querySelector('#cancelar').hidden = true;
+    }
+
+    async function carregarAutores() {
+      const resposta = await fetch(api);
+      const dados = await resposta.json();
+      const lista = document.querySelector('#lista-autores');
+      lista.textContent = '';
+      
+      if(dados.autores) {
+          dados.autores.forEach((autor) => {
+            const linha = document.createElement('tr');
+            ['id', 'nome', 'cpf', 'email'].forEach((campo) => {
+              const celula = document.createElement('td');
+              celula.textContent = autor[campo];
+              linha.appendChild(celula);
+            });
+            const acoes = document.createElement('td');
+            acoes.innerHTML = `<button type="button" data-editar="${autor.id}">Editar</button>
+              <button type="button" data-excluir="${autor.id}">Excluir</button>`;
+            linha.appendChild(acoes);
+            lista.appendChild(linha);
+          });
+      }
+    }
+
+    formulario.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      const resposta = await fetch(api, { method: 'POST', body: new FormData(formulario) });
+      const dados = await resposta.json();
+      mostrarResultado(dados);
+      if (resposta.ok) { limparFormulario(); await carregarAutores(); }
+    });
+
+    document.querySelector('#cancelar').addEventListener('click', limparFormulario);
+    document.querySelector('#lista-autores').addEventListener('click', async (evento) => {
+      const editar = evento.target.dataset.editar;
+      const excluir = evento.target.dataset.excluir;
+      if (editar) {
+        const dados = await (await fetch(`${api}?editar=${editar}`)).json();
+        Object.entries(dados.autor).forEach(([campo, valor]) => { formulario[campo].value = valor; });
+        document.querySelector('#titulo-formulario').textContent = 'Editar Autor';
+        document.querySelector('#cancelar').hidden = false;
+      } else if (excluir && confirm('Excluir este autor?')) {
+        const dados = await (await fetch(api, { method: 'POST', body: new URLSearchParams({ acao: 'excluir', id: excluir }) })).json();
+        mostrarResultado(dados);
+        await carregarAutores();
+      }
+    });
+
+    carregarAutores();
+  </script>
+</body>
+</html>

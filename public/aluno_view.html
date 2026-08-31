@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CRUD de alunos</title>
+  <link rel="stylesheet" href="css/aluno.css">
+</head>
+<body>
+  <nav style="background: var(--cor-superficie); padding: 15px; border-radius: var(--raio); margin-bottom: 20px; box-shadow: var(--sombra); display: flex; gap: 15px;">
+  <a href="aluno_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Alunos</a>
+  <a href="autor_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Autores</a>
+  <a href="livro_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Livros</a>
+  <a href="reserva_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Reservas</a>
+</nav>
+  <h1>Alunos</h1>
+  <p id="mensagem" class="sucesso"></p>
+  <p id="erro" class="erro"></p>
+
+  <h2 id="titulo-formulario">Novo aluno</h2>
+  <form id="formulario-aluno">
+    <input type="hidden" name="acao" value="salvar">
+    <input type="hidden" name="matricula">
+    <label>Nome<br><input name="nome" maxlength="200" required></label>
+    <label>E-mail<br><input type="email" name="email" maxlength="200" required></label>
+    <label>CPF<br><input name="cpf" maxlength="11" required></label>
+    <label>Telefone<br><input name="telefone" maxlength="15" required></label>
+    <label>Endereço<br><textarea name="endereco" required></textarea></label>
+    <button type="submit">Salvar</button>
+    <button id="cancelar" type="button" hidden>Cancelar</button>
+  </form>
+
+  <table>
+    <thead><tr><th>Matrícula</th><th>Nome</th><th>E-mail</th><th>CPF</th><th>Telefone</th><th>Endereço</th><th>Ações</th></tr></thead>
+    <tbody id="lista-alunos"></tbody>
+  </table>
+
+  <script>
+    const api = 'aluno.php';
+    const formulario = document.querySelector('#formulario-aluno');
+
+    function mostrarResultado(dados) {
+      document.querySelector('#mensagem').textContent = dados.mensagem || '';
+      document.querySelector('#erro').textContent = dados.erro || '';
+    }
+
+    function limparFormulario() {
+      formulario.reset();
+      formulario.matricula.value = '';
+      document.querySelector('#titulo-formulario').textContent = 'Novo aluno';
+      document.querySelector('#cancelar').hidden = true;
+    }
+
+    async function carregarAlunos() {
+      const resposta = await fetch(api);
+      const dados = await resposta.json();
+      const lista = document.querySelector('#lista-alunos');
+      lista.textContent = '';
+      dados.alunos.forEach((aluno) => {
+        const linha = document.createElement('tr');
+        ['matricula', 'nome', 'email', 'cpf', 'telefone', 'endereco'].forEach((campo) => {
+          const celula = document.createElement('td');
+          celula.textContent = aluno[campo];
+          linha.appendChild(celula);
+        });
+        const acoes = document.createElement('td');
+        acoes.innerHTML = `<button type="button" data-editar="${aluno.matricula}">Editar</button>
+          <button type="button" data-excluir="${aluno.matricula}">Excluir</button>`;
+        linha.appendChild(acoes);
+        lista.appendChild(linha);
+      });
+    }
+
+    formulario.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      const resposta = await fetch(api, { method: 'POST', body: new FormData(formulario) });
+      const dados = await resposta.json();
+      mostrarResultado(dados);
+      if (resposta.ok) { limparFormulario(); await carregarAlunos(); }
+    });
+
+    document.querySelector('#cancelar').addEventListener('click', limparFormulario);
+    document.querySelector('#lista-alunos').addEventListener('click', async (evento) => {
+      const editar = evento.target.dataset.editar;
+      const excluir = evento.target.dataset.excluir;
+      if (editar) {
+        const dados = await (await fetch(`${api}?editar=${editar}`)).json();
+        Object.entries(dados.aluno).forEach(([campo, valor]) => { formulario[campo].value = valor; });
+        document.querySelector('#titulo-formulario').textContent = 'Editar aluno';
+        document.querySelector('#cancelar').hidden = false;
+      } else if (excluir && confirm('Excluir este aluno?')) {
+        const dados = await (await fetch(api, { method: 'POST', body: new URLSearchParams({ acao: 'excluir', matricula: excluir }) })).json();
+        mostrarResultado(dados);
+        await carregarAlunos();
+      }
+    });
+
+    carregarAlunos();
+  </script>
+</body>
+</html>

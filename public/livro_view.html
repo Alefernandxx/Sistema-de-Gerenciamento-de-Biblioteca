@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CRUD de Livros e Autores</title>
+  <link rel="stylesheet" href="css/aluno.css">
+</head>
+<body>
+  <nav style="background: var(--cor-superficie); padding: 15px; border-radius: var(--raio); margin-bottom: 20px; box-shadow: var(--sombra); display: flex; gap: 15px;">
+  <a href="aluno_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Alunos</a>
+  <a href="autor_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Autores</a>
+  <a href="livro_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Livros</a>
+  <a href="reserva_view.html" style="text-decoration: none; color: var(--cor-primaria); font-weight: bold;">Reservas</a>
+</nav>
+
+  <h1>Catálogo de Livros</h1>
+  
+  <h2>Pesquisar</h2>
+  <form id="formulario-busca" style="margin-bottom: 30px;">
+    <label>
+      Título do Livro ou Nome do Autor
+      <input type="text" name="busca" placeholder="Ex: Arte da Guerra ou Maquiavel...">
+    </label>
+    <button type="submit">Pesquisar</button>
+  </form>
+
+  <p id="mensagem" class="sucesso"></p>
+  <p id="erro" class="erro"></p>
+
+  <h2 id="titulo-formulario">Novo Livro</h2>
+  <form id="formulario-livro">
+    <input type="hidden" name="acao" value="salvar">
+    <input type="hidden" name="id">
+    <label>Título<br><input name="titulo" maxlength="200" required></label>
+    <label>Gênero<br><input name="genero" maxlength="50" required></label>
+    <label>Ano Lançamento<br><input type="number" name="ano_lancamento" required></label>
+    <label>ID do Autor<br><input type="number" name="autor_id" required placeholder="Ex: 1"></label>
+    <label>ID da Reserva<br><input type="number" name="reserva_id" required placeholder="Ex: 1"></label>
+    <button type="submit">Salvar</button>
+    <button id="cancelar" type="button" hidden>Cancelar</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Título</th>
+        <th>Gênero</th>
+        <th>Lançamento</th>
+        <th>Autor(es)</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="lista-livros"></tbody>
+  </table>
+
+  <script>
+    const api = 'livro.php';
+    const formBusca = document.querySelector('#formulario-busca');
+    const formLivro = document.querySelector('#formulario-livro');
+
+    async function carregarLivros(termo = '') {
+      const url = termo ? `${api}?busca=${encodeURIComponent(termo)}` : api;
+      const resposta = await fetch(url);
+      const dados = await resposta.json();
+      
+      const lista = document.querySelector('#lista-livros');
+      lista.innerHTML = '';
+      
+      if(dados.livros) {
+          dados.livros.forEach((livro) => {
+            const linha = document.createElement('tr');
+            ['id', 'titulo', 'genero', 'ano_lançamento', 'autores', 'reserva_status'].forEach((campo) => {
+              const celula = document.createElement('td');
+              celula.textContent = livro[campo];
+              linha.appendChild(celula);
+            });
+            
+            const acoes = document.createElement('td');
+            acoes.innerHTML = `<button type="button" data-excluir="${livro.id}">Excluir</button>`;
+            linha.appendChild(acoes);
+            lista.appendChild(linha);
+          });
+      }
+    }
+
+    formBusca.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      carregarLivros(formBusca.busca.value);
+    });
+
+    formLivro.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      const resposta = await fetch(api, { method: 'POST', body: new FormData(formLivro) });
+      const dados = await resposta.json();
+      
+      document.querySelector('#mensagem').textContent = dados.mensagem || '';
+      document.querySelector('#erro').textContent = dados.erro || '';
+      
+      if (resposta.ok) { 
+          formLivro.reset(); 
+          formLivro.id.value = '';
+          await carregarLivros(formBusca.busca.value); 
+      }
+    });
+
+    document.querySelector('#lista-livros').addEventListener('click', async (evento) => {
+      const excluir = evento.target.dataset.excluir;
+      if (excluir && confirm('Deseja realmente excluir este livro?')) {
+        const resposta = await fetch(api, { 
+            method: 'POST', 
+            body: new URLSearchParams({ acao: 'excluir', id: excluir }) 
+        });
+        const dados = await resposta.json();
+        
+        document.querySelector('#mensagem').textContent = dados.mensagem || '';
+        document.querySelector('#erro').textContent = dados.erro || '';
+        await carregarLivros(formBusca.busca.value);
+      }
+    });
+
+    carregarLivros();
+  </script>
+</body>
+</html>
